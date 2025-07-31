@@ -1,31 +1,50 @@
-# React & Tailwind CSS Starter Pack
+# React JS + Tailwind CSS Starter Template
 
-This is a starter pack for creating React projects with Tailwind CSS configured. It uses React version **18.2** and Tailwind CSS version **3.2**.
+A starter template for creating React Apps, styled with Tailwind CSS.
 
-## Usage
+## Getting started
 
-This starter pack includes a basic setup for using **Tailwind CSS with React**. To start building your own components and styles, follow these steps:
 
-1. Clone the repository to your local machine.
-    ```sh
-    git clone https://github.com/thepranaygupta/react-tailwind-css-starter-pack.git
-    ```
+First, fork this repo.
 
-1. Install the required packages.
-    ```sh
-    cd react-tailwind-css-starter-pack
-    npm install
-    ```
+Now head over to creating a <a href="github.com/new">new</a> repo. From the repository template section, click the dropdown and select:
 
-1. Start the development server.
-    ```sh
-    npm start
-    ```
-1. Open the project in your browser at [`http://localhost:3000`](http://localhost:3000) to view your project.
-1. Create your React components and add your styles using Tailwind classes. You can also create new CSS files and import them into your components.
+```
+yourusername/react-js-tailwind
+```
 
-The project is set up to use `postcss-cli` to process your CSS files. You can add your own `tailwind.config.js` file to customize your Tailwind setup.
+Make your changes to suit your project's needs. 
 
-## Contributing
+Clone locally with:
 
-Contributions are welcome! If you have any suggestions or find any issues, please feel free to open an issue or a pull request.
+```
+git clone https://github.com/yourusername/projectname
+```
+
+In your terminal, run:
+
+```
+npm install
+```
+
+to install all dependencies.
+
+When it's done, run:
+
+```
+npm run dev
+```
+
+Hit
+
+```
+O
+````
+
+and vite will open it in your browser.
+
+Or open your browser and navigate to <a href="localhost:5173">localchost:5173</a>.
+
+Make your changes, save and "VOILA!
+
+Happy hacking!
