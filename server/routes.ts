@@ -2,28 +2,18 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, requireAuth } from "./auth";
 import { insertItemSchema, insertMessageSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
   // Initialize categories
   await initializeCategories();
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Note: Auth routes (/api/login, /api/register, /api/logout, /api/auth/user) are now handled in auth.ts
 
   // Categories
   app.get('/api/categories', async (req, res) => {
@@ -76,9 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/items', isAuthenticated, async (req: any, res) => {
+  app.post('/api/items', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const itemData = insertItemSchema.parse({
         ...req.body,
         sellerId: userId,
@@ -95,10 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/items/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/items/:id', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // Verify item belongs to user
       const existingItem = await storage.getItem(id);
@@ -118,10 +108,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/items/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/items/:id', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const deleted = await storage.deleteItem(id, userId);
       if (!deleted) {
@@ -136,9 +126,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User's items
-  app.get('/api/my-items', isAuthenticated, async (req: any, res) => {
+  app.get('/api/my-items', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const items = await storage.getItems({ sellerId: userId });
       res.json(items);
     } catch (error) {
@@ -148,9 +138,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Wishlist
-  app.get('/api/wishlist', isAuthenticated, async (req: any, res) => {
+  app.get('/api/wishlist', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const wishlist = await storage.getUserWishlist(userId);
       res.json(wishlist);
     } catch (error) {
@@ -159,9 +149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/wishlist/:itemId', isAuthenticated, async (req: any, res) => {
+  app.post('/api/wishlist/:itemId', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { itemId } = req.params;
       
       await storage.addToWishlist(userId, itemId);
@@ -172,9 +162,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/wishlist/:itemId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/wishlist/:itemId', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { itemId } = req.params;
       
       await storage.removeFromWishlist(userId, itemId);
@@ -185,9 +175,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/wishlist/check/:itemId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/wishlist/check/:itemId', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { itemId } = req.params;
       
       const isInWishlist = await storage.isItemInWishlist(userId, itemId);
@@ -199,9 +189,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Messages and Conversations
-  app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
+  app.get('/api/conversations', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
@@ -210,10 +200,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/conversations/:id/messages', isAuthenticated, async (req: any, res) => {
+  app.get('/api/conversations/:id/messages', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       const messages = await storage.getConversationMessages(id);
       await storage.markMessagesAsRead(id, userId);
@@ -225,9 +215,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/messages', isAuthenticated, async (req: any, res) => {
+  app.post('/api/messages', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const messageData = insertMessageSchema.parse({
         ...req.body,
         fromUserId: userId,
