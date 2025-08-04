@@ -33,10 +33,10 @@ export default function Landing() {
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
-                <a href="/api/login">Sign In</a>
+                <a href="/auth">Sign In</a>
               </Button>
               <Button asChild>
-                <a href="/api/login">Get Started</a>
+                <a href="/auth">Get Started</a>
               </Button>
             </div>
           </div>
@@ -57,10 +57,10 @@ export default function Landing() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" variant="secondary" asChild>
-                  <a href="/api/login">Start Shopping</a>
+                  <a href="/auth">Start Shopping</a>
                 </Button>
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary" asChild>
-                  <a href="/api/login">List Your Items</a>
+                  <a href="/auth">List Your Items</a>
                 </Button>
               </div>
             </div>
@@ -139,7 +139,7 @@ export default function Landing() {
           <h2 className="text-3xl font-bold mb-4">Ready to Start Trading?</h2>
           <p className="text-xl text-gray-300 mb-8">Join thousands of students already using Campus Bazaar</p>
           <Button size="lg" variant="secondary" asChild>
-            <a href="/api/login">Join Campus Bazaar</a>
+            <a href="/auth">Join Campus Bazaar</a>
           </Button>
         </div>
       </section>
