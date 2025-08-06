@@ -9,7 +9,7 @@ import { Search, Plus, Bell, MessageCircle, Menu, User, Settings, LogOut } from 
 import { Link, useLocation } from "wouter";
 
 export default function Navbar() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -116,11 +116,9 @@ export default function Navbar() {
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <a href="/api/logout">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log out
-                    </a>
+                  <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
