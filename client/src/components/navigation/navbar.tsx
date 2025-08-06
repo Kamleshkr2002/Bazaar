@@ -74,12 +74,12 @@ export default function Navbar() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="relative">
+              <Button variant="ghost" size="sm" className="relative" onClick={() => alert('Notifications feature coming soon!')}>
                 <Bell className="h-4 w-4" />
                 <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs">3</Badge>
               </Button>
               
-              <Button variant="ghost" size="sm" className="relative">
+              <Button variant="ghost" size="sm" className="relative" onClick={() => alert('Chat feature coming soon!')}>
                 <MessageCircle className="h-4 w-4" />
                 <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-secondary">2</Badge>
               </Button>

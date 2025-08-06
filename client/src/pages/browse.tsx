@@ -33,7 +33,9 @@ export default function Browse() {
   });
 
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    // Convert 'all' and 'any' back to empty string for API
+    const apiValue = (value === 'all' || value === 'any') ? '' : value;
+    setFilters(prev => ({ ...prev, [key]: apiValue }));
   };
 
   const clearFilters = () => {
@@ -74,12 +76,12 @@ export default function Browse() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <Select value={filters.categoryId} onValueChange={(value) => handleFilterChange('categoryId', value)}>
+                <Select value={filters.categoryId || 'all'} onValueChange={(value) => handleFilterChange('categoryId', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.emoji} {category.name}
@@ -91,12 +93,12 @@ export default function Browse() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
-                <Select value={filters.condition} onValueChange={(value) => handleFilterChange('condition', value)}>
+                <Select value={filters.condition || 'any'} onValueChange={(value) => handleFilterChange('condition', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Any Condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any Condition</SelectItem>
+                    <SelectItem value="any">Any Condition</SelectItem>
                     <SelectItem value="like_new">Like New</SelectItem>
                     <SelectItem value="excellent">Excellent</SelectItem>
                     <SelectItem value="good">Good</SelectItem>
