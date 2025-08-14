@@ -6,18 +6,18 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { 
-  User, 
-  LoginData, 
-  RegisterData, 
+import {
+  User,
+  LoginData,
+  RegisterData,
   VerifyOTPData,
   ForgotPasswordData,
   ResetPasswordData,
-  loginSchema, 
+  loginSchema,
   registerSchema,
   verifyOTPSchema,
   forgotPasswordSchema,
-  resetPasswordSchema
+  resetPasswordSchema,
 } from "../shared/mongodb-schemas";
 import MemoryStore from "memorystore";
 import { emailService, OTPService } from "./email-service";
@@ -37,7 +37,10 @@ async function hashPassword(password: string): Promise<string> {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
+async function comparePasswords(
+  supplied: string,
+  stored: string,
+): Promise<boolean> {
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -49,7 +52,7 @@ export function setupAuth(app: Express) {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const MemoryStoreConstructor = MemoryStore(session);
   const sessionStore = new MemoryStoreConstructor({
-    checkPeriod: 86400000 // prune expired entries every 24h
+    checkPeriod: 86400000, // prune expired entries every 24h
   });
 
   const sessionSettings: session.SessionOptions = {
@@ -79,18 +82,24 @@ export function setupAuth(app: Express) {
       async (email, password, done) => {
         try {
           const user = await storage.getUserByEmail(email);
-          if (!user || !user.password || !(await comparePasswords(password, user.password))) {
+          if (
+            !user ||
+            !user.password ||
+            !(await comparePasswords(password, user.password))
+          ) {
             return done(null, false, { message: "Invalid email or password" });
           }
           if (!user.isEmailVerified) {
-            return done(null, false, { message: "Please verify your email before logging in" });
+            return done(null, false, {
+              message: "Please verify your email before logging in",
+            });
           }
           return done(null, user);
         } catch (error) {
           return done(error);
         }
-      }
-    )
+      },
+    ),
   );
 
   // Google OAuth strategy
@@ -98,30 +107,33 @@ export function setupAuth(app: Express) {
     new GoogleStrategy(
       {
         clientID: process.env.REDACTED,
-        clientSecret: process.env.REDACTED ,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/auth/google/callback",
+        clientSecret: process.env.REDACTED,
+        callbackURL:
+          process.env.GOOGLE_CALLBACK_URL ||
+          "http://localhost:5000/auth/google/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
           // Check if user exists with Google ID
           let user = await storage.getUserByGoogleId(profile.id);
-          
+
           if (user) {
             return done(null, user);
           }
-          
+
           // Check if user exists with same email
           user = await storage.getUserByEmail(profile.emails![0].value);
-          
+
           if (user) {
             // Link Google account to existing user
             user = await storage.updateUser(user.id, {
               googleId: profile.id,
-              profileImageUrl: user.profileImageUrl || profile.photos![0]?.value,
+              profileImageUrl:
+                user.profileImageUrl || profile.photos![0]?.value,
             });
             return done(null, user);
           }
-          
+
           // Create new user from Google profile
           const newUser = await storage.createUser({
             email: profile.emails![0].value,
@@ -131,13 +143,13 @@ export function setupAuth(app: Express) {
             profileImageUrl: profile.photos![0]?.value,
             isEmailVerified: true, // Google emails are pre-verified
           });
-          
+
           return done(null, newUser);
         } catch (error) {
           return done(error);
         }
-      }
-    )
+      },
+    ),
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -151,70 +163,79 @@ export function setupAuth(app: Express) {
   });
 
   // Registration endpoint with profile image upload
-  app.post("/api/register", uploadProfileImage.single('profileImage'), async (req, res, next) => {
-    try {
-      const validation = registerSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validation.error.issues 
+  app.post(
+    "/api/register",
+    uploadProfileImage.single("profileImage"),
+    async (req, res, next) => {
+      try {
+        const validation = registerSchema.safeParse(req.body);
+        if (!validation.success) {
+          return res.status(400).json({
+            message: "Validation failed",
+            errors: validation.error.issues,
+          });
+        }
+
+        const { email, password, firstName, lastName } = validation.data;
+
+        // Check if user already exists
+        const existingUser = await storage.getUserByEmail(email);
+        if (existingUser) {
+          return res.status(400).json({ message: "Email already registered" });
+        }
+
+        // Get profile image URL from Cloudinary upload
+        const profileImageUrl = req.file ? req.file.path : undefined;
+
+        // Generate OTP for email verification
+        const otp = OTPService.generateOTP(email);
+        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+        // Create user with hashed password and OTP
+        const hashedPassword = await hashPassword(password);
+        const user = await storage.createUser({
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          profileImageUrl,
+          isEmailVerified: false,
+          verificationOTP: otp,
+          otpExpiry,
         });
+
+        // Send verification email
+        const emailSent = await emailService.sendOTP(
+          email,
+          otp,
+          "verification",
+        );
+
+        if (!emailSent) {
+          console.error("Failed to send verification email");
+          // Continue registration even if email fails
+        }
+
+        res.status(201).json({
+          message:
+            "Registration successful. Please check your email for verification code.",
+          needsVerification: true,
+          email: user.email,
+        });
+      } catch (error) {
+        console.error("Registration error:", error);
+        res.status(500).json({ message: "Internal server error" });
       }
-
-      const { email, password, firstName, lastName } = validation.data;
-
-      // Check if user already exists
-      const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
-        return res.status(400).json({ message: "Email already registered" });
-      }
-
-      // Get profile image URL from Cloudinary upload
-      const profileImageUrl = req.file ? req.file.path : undefined;
-
-      // Generate OTP for email verification
-      const otp = OTPService.generateOTP(email);
-      const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-      // Create user with hashed password and OTP
-      const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        profileImageUrl,
-        isEmailVerified: false,
-        verificationOTP: otp,
-        otpExpiry,
-      });
-
-      // Send verification email
-      const emailSent = await emailService.sendOTP(email, otp, 'verification');
-      
-      if (!emailSent) {
-        console.error("Failed to send verification email");
-        // Continue registration even if email fails
-      }
-
-      res.status(201).json({ 
-        message: "Registration successful. Please check your email for verification code.",
-        needsVerification: true,
-        email: user.email
-      });
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
+    },
+  );
 
   // Login endpoint
   app.post("/api/login", (req, res, next) => {
     const validation = loginSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({ 
-        message: "Validation failed", 
-        errors: validation.error.issues 
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validation.error.issues,
       });
     }
 
@@ -223,17 +244,19 @@ export function setupAuth(app: Express) {
         return next(err);
       }
       if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        return res
+          .status(401)
+          .json({ message: info?.message || "Invalid credentials" });
       }
 
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(200).json({ 
-          id: user.id, 
-          email: user.email, 
-          firstName: user.firstName, 
+        res.status(200).json({
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
           lastName: user.lastName,
-          profileImageUrl: user.profileImageUrl 
+          profileImageUrl: user.profileImageUrl,
         });
       });
     })(req, res, next);
@@ -248,16 +271,18 @@ export function setupAuth(app: Express) {
   });
 
   // Google OAuth routes
-  app.get("/auth/google", 
-    passport.authenticate("google", { scope: ["profile", "email"] })
+  app.get(
+    "/auth/google",
+    passport.authenticate("google", { scope: ["profile", "email"] }),
   );
 
-  app.get("/auth/google/callback",
+  app.get(
+    "/auth/google/callback",
     passport.authenticate("google", { failureRedirect: "/auth" }),
     (req, res) => {
       // Successful authentication, redirect to dashboard
       res.redirect("/dashboard");
-    }
+    },
   );
 
   // Email verification endpoint
@@ -265,9 +290,9 @@ export function setupAuth(app: Express) {
     try {
       const validation = verifyOTPSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validation.error.issues 
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: validation.error.issues,
         });
       }
 
@@ -284,11 +309,19 @@ export function setupAuth(app: Express) {
 
       // Check if OTP is valid and not expired
       if (!user.verificationOTP || !user.otpExpiry) {
-        return res.status(400).json({ message: "No verification code found. Please request a new one." });
+        return res
+          .status(400)
+          .json({
+            message: "No verification code found. Please request a new one.",
+          });
       }
 
       if (user.otpExpiry < new Date()) {
-        return res.status(400).json({ message: "Verification code has expired. Please request a new one." });
+        return res
+          .status(400)
+          .json({
+            message: "Verification code has expired. Please request a new one.",
+          });
       }
 
       if (user.verificationOTP !== otp) {
@@ -335,10 +368,12 @@ export function setupAuth(app: Express) {
         otpExpiry,
       });
 
-      const emailSent = await emailService.sendOTP(email, otp, 'verification');
-      
+      const emailSent = await emailService.sendOTP(email, otp, "verification");
+
       if (!emailSent) {
-        return res.status(500).json({ message: "Failed to send verification email" });
+        return res
+          .status(500)
+          .json({ message: "Failed to send verification email" });
       }
 
       res.json({ message: "Verification email sent successfully" });
@@ -353,9 +388,9 @@ export function setupAuth(app: Express) {
     try {
       const validation = forgotPasswordSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validation.error.issues 
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: validation.error.issues,
         });
       }
 
@@ -364,7 +399,9 @@ export function setupAuth(app: Express) {
       const user = await storage.getUserByEmail(email);
       if (!user) {
         // Don't reveal if user exists or not
-        return res.json({ message: "If the email exists, a reset code has been sent." });
+        return res.json({
+          message: "If the email exists, a reset code has been sent.",
+        });
       }
 
       // Generate reset OTP
@@ -376,8 +413,8 @@ export function setupAuth(app: Express) {
         resetPasswordExpiry,
       });
 
-      const emailSent = await emailService.sendOTP(email, otp, 'reset');
-      
+      const emailSent = await emailService.sendOTP(email, otp, "reset");
+
       if (!emailSent) {
         console.error("Failed to send reset password email");
       }
@@ -394,9 +431,9 @@ export function setupAuth(app: Express) {
     try {
       const validation = resetPasswordSchema.safeParse(req.body);
       if (!validation.success) {
-        return res.status(400).json({ 
-          message: "Validation failed", 
-          errors: validation.error.issues 
+        return res.status(400).json({
+          message: "Validation failed",
+          errors: validation.error.issues,
         });
       }
 
@@ -409,11 +446,17 @@ export function setupAuth(app: Express) {
 
       // Check if OTP is valid and not expired
       if (!user.resetPasswordOTP || !user.resetPasswordExpiry) {
-        return res.status(400).json({ message: "No reset code found. Please request a new one." });
+        return res
+          .status(400)
+          .json({ message: "No reset code found. Please request a new one." });
       }
 
       if (user.resetPasswordExpiry < new Date()) {
-        return res.status(400).json({ message: "Reset code has expired. Please request a new one." });
+        return res
+          .status(400)
+          .json({
+            message: "Reset code has expired. Please request a new one.",
+          });
       }
 
       if (user.resetPasswordOTP !== otp) {
@@ -428,7 +471,10 @@ export function setupAuth(app: Express) {
         resetPasswordExpiry: undefined,
       });
 
-      res.json({ message: "Password reset successfully. You can now log in with your new password." });
+      res.json({
+        message:
+          "Password reset successfully. You can now log in with your new password.",
+      });
     } catch (error) {
       console.error("Reset password error:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -440,15 +486,15 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    
+
     const user = req.user as User;
-    res.json({ 
-      id: user.id, 
-      email: user.email, 
-      firstName: user.firstName, 
+    res.json({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
       lastName: user.lastName,
       profileImageUrl: user.profileImageUrl,
-      isEmailVerified: user.isEmailVerified 
+      isEmailVerified: user.isEmailVerified,
     });
   });
 }
