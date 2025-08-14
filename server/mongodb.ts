@@ -4,9 +4,7 @@ const MONGODB_URI = process.env.MONGODB_URI
   ? process.env.MONGODB_URI + "/Campus-Bazaar"
   : "";
 
-if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI must be defined');
-}
+
 
 // Connection state
 let cached = global.mongoose;
