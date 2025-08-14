@@ -53,14 +53,6 @@ export default function Dashboard() {
                       {(user as any)?.firstName} {(user as any)?.lastName}
                     </h3>
                     <p className="text-sm text-gray-600">{(user as any)?.email}</p>
-                    <div className="flex items-center mt-1">
-                      <div className="flex text-yellow-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="h-3 w-3 fill-current" />
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-600 ml-1">4.9 (27 reviews)</span>
-                    </div>
                   </div>
                 </div>
               </CardContent>
