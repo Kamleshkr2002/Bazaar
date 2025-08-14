@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = "mongodb+srv://shanks:Kumar%402002@cluster0.sbaj25r.mongodb.net/campus-bazaar?retryWrites=true&w=majority";
+const MONGODB_URI = process.env.MONGODB_URI
+  ? process.env.MONGODB_URI + "/Campus-Bazaar"
+  : "";
 
 if (!MONGODB_URI) {
   throw new Error('MONGODB_URI must be defined');

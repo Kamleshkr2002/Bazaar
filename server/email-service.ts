@@ -21,8 +21,8 @@ class NodemailerService implements EmailService {
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.EMAIL_USER || 'kamlesh.kumar23112002@gmail.com',
-        pass: process.env.EMAIL_PASS || 'ctoyyajbehbbbvtr',
+        user: process.env.EMAIL_USER ,
+        pass: process.env.EMAIL_PASS,
       },
     });
   }
