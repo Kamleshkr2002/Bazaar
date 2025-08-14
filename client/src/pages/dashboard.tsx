@@ -42,17 +42,22 @@ export default function Dashboard() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center mb-6">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-16 w-16 flex-shrink-0">
                     <AvatarImage src={(user as any)?.profileImageUrl} />
                     <AvatarFallback>
                       {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="ml-4">
-                    <h3 className="font-semibold text-gray-900">
+                  <div className="ml-4 flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 truncate" title={`${(user as any)?.firstName} ${(user as any)?.lastName}`}>
                       {(user as any)?.firstName} {(user as any)?.lastName}
                     </h3>
-                    <p className="text-sm text-gray-600">{(user as any)?.email}</p>
+                    <p className="text-sm text-gray-600 truncate" title={(user as any)?.email}>{(user as any)?.email}</p>
+                    {!(user as any)?.isEmailVerified && (
+                      <Badge variant="destructive" className="mt-1 text-xs">
+                        Email Not Verified
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>

@@ -22,7 +22,9 @@ export interface IStorage {
   // User operations for email/password auth
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
+  updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User | undefined>;
   upsertUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
   
   // Category operations
@@ -104,6 +106,7 @@ export class MongoStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
     try {
+      await this.ensureInitialized();
       if (!Types.ObjectId.isValid(id)) return undefined;
       const user = await UserModel.findById(id).lean();
       return user ? { ...user, id: user._id.toString() } as User : undefined;
@@ -115,6 +118,7 @@ export class MongoStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     try {
+      await this.ensureInitialized();
       const user = await UserModel.findOne({ email }).lean();
       return user ? { ...user, id: user._id.toString() } as User : undefined;
     } catch (error) {
@@ -123,8 +127,20 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    try {
+      await this.ensureInitialized();
+      const user = await UserModel.findOne({ googleId }).lean();
+      return user ? { ...user, id: user._id.toString() } as User : undefined;
+    } catch (error) {
+      console.error('Error getting user by Google ID:', error);
+      return undefined;
+    }
+  }
+
   async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     try {
+      await this.ensureInitialized();
       const user = new UserModel(userData);
       const savedUser = await user.save();
       return { ...savedUser.toObject(), id: savedUser._id.toString() } as User;
@@ -134,8 +150,27 @@ export class MongoStorage implements IStorage {
     }
   }
 
+  async updateUser(id: string, updates: Partial<Omit<User, 'id' | 'createdAt' | 'updatedAt'>>): Promise<User | undefined> {
+    try {
+      await this.ensureInitialized();
+      if (!Types.ObjectId.isValid(id)) return undefined;
+      
+      const user = await UserModel.findByIdAndUpdate(
+        id,
+        { $set: updates },
+        { new: true, lean: true }
+      );
+
+      return user ? { ...user, id: user._id.toString() } as User : undefined;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      return undefined;
+    }
+  }
+
   async upsertUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
     try {
+      await this.ensureInitialized();
       const user = await UserModel.findOneAndUpdate(
         { email: userData.email },
         { $set: userData },
