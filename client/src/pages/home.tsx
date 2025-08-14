@@ -34,11 +34,11 @@ export default function Home() {
                 furniture, and more at great prices.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" variant="secondary" asChild>
-                  <Link href="/browse">Start Shopping</Link>
+                <Button size="lg" className="hover:bg-orange-400" variant="secondary" asChild>
+                  <a href="/auth">Start Shopping</a>
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary" asChild>
-                  <Link href="/dashboard">List Your Items</Link>
+                <Button size="lg" variant="outline" className="border-white text-blue-600 hover:bg-gray-50 hover:border-gray-50 hover:text-primary" asChild>
+                  <a href="/auth">List Your Items</a>
                 </Button>
               </div>
             </div>
@@ -102,6 +102,51 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      <footer className="bg-gray-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <h3 className="text-xl font-bold mb-4">Campus Bazaar</h3>
+              <p className="text-gray-400 mb-4">Connecting college students to buy and sell items safely and conveniently.</p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Marketplace</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Browse Items</a></li>
+                <li><a href="#" className="hover:text-white">Sell Your Items</a></li>
+                <li><a href="#" className="hover:text-white">Popular Categories</a></li>
+                <li><a href="#" className="hover:text-white">Safety Tips</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Help Center</a></li>
+                <li><a href="#" className="hover:text-white">Contact Us</a></li>
+                <li><a href="#" className="hover:text-white">Report an Issue</a></li>
+                <li><a href="#" className="hover:text-white">Community Guidelines</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-white">Cookie Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 Campus Bazaar. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }

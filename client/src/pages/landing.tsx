@@ -56,10 +56,10 @@ export default function Landing() {
                 furniture, and more at great prices.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" variant="secondary" asChild>
+                <Button size="lg" className="hover:bg-orange-400" variant="secondary" asChild>
                   <a href="/auth">Start Shopping</a>
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary" asChild>
+                <Button size="lg" variant="outline" className="border-white text-blue-600 hover:bg-gray-50 hover:border-gray-50 hover:text-primary" asChild>
                   <a href="/auth">List Your Items</a>
                 </Button>
               </div>
@@ -184,7 +184,7 @@ export default function Landing() {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Campus Bazaar. All rights reserved.</p>
+            <p>&copy; 2025 Campus Bazaar. All rights reserved.</p>
           </div>
         </div>
       </footer>

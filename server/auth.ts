@@ -254,11 +254,7 @@ export function setupAuth(app: Express) {
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(200).json({
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          profileImageUrl: user.profileImageUrl,
+          user
         });
       });
     })(req, res, next);
@@ -332,7 +328,7 @@ export function setupAuth(app: Express) {
 
       // Verify the user
       await storage.updateUser(user.id, {
-        isEmailVerified: true,
+        isEmailVerified: true,s
         verificationOTP: undefined,
         otpExpiry: undefined,
       });
