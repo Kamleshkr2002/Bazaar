@@ -383,4 +383,301 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory storage implementation for development
+export class MemStorage implements IStorage {
+  private users: Map<string, User> = new Map();
+  private items: Map<string, Item> = new Map();
+  private categories: Map<string, Category> = new Map();
+  private messages: Map<string, Message> = new Map();
+  private conversations: Map<string, Conversation> = new Map();
+  private wishlistEntries: Map<string, { userId: string; itemId: string; createdAt: Date }> = new Map();
+  private usersByEmail: Map<string, User> = new Map();
+
+  constructor() {
+    // Initialize with sample categories
+    this.initializeCategories();
+  }
+
+  private initializeCategories() {
+    const defaultCategories = [
+      { id: '1', name: 'Books & Textbooks', emoji: '📚', createdAt: new Date() },
+      { id: '2', name: 'Electronics', emoji: '💻', createdAt: new Date() },
+      { id: '3', name: 'Furniture', emoji: '🪑', createdAt: new Date() },
+      { id: '4', name: 'Clothing', emoji: '👕', createdAt: new Date() },
+      { id: '5', name: 'Sports & Recreation', emoji: '⚽', createdAt: new Date() },
+      { id: '6', name: 'Other', emoji: '📦', createdAt: new Date() },
+    ];
+    
+    for (const category of defaultCategories) {
+      this.categories.set(category.id, category);
+    }
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return this.usersByEmail.get(email);
+  }
+
+  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    const user: User = {
+      ...userData,
+      profileImageUrl: userData.profileImageUrl || null,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(user.id, user);
+    this.usersByEmail.set(user.email, user);
+    return user;
+  }
+
+  async upsertUser(user: UpsertUser): Promise<User> {
+    const existingUser = this.usersByEmail.get(user.email);
+    if (existingUser) {
+      const updatedUser = {
+        ...existingUser,
+        ...user,
+        updatedAt: new Date(),
+      };
+      this.users.set(updatedUser.id, updatedUser);
+      this.usersByEmail.set(updatedUser.email, updatedUser);
+      return updatedUser;
+    } else {
+      return this.createUser(user);
+    }
+  }
+
+  // Category operations
+  async getCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values());
+  }
+
+  async createCategory(name: string, emoji: string): Promise<Category> {
+    const category: Category = {
+      id: this.generateId(),
+      name,
+      emoji,
+      createdAt: new Date(),
+    };
+    this.categories.set(category.id, category);
+    return category;
+  }
+
+  // Item operations
+  async getItems(filters?: {
+    categoryId?: string;
+    condition?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+    sellerId?: string;
+  }): Promise<ItemWithDetails[]> {
+    let results = Array.from(this.items.values()).filter(item => item.isActive);
+
+    if (filters) {
+      if (filters.categoryId) {
+        results = results.filter(item => item.categoryId === filters.categoryId);
+      }
+      if (filters.condition) {
+        results = results.filter(item => item.condition === filters.condition);
+      }
+      if (filters.minPrice !== undefined) {
+        results = results.filter(item => parseFloat(item.price) >= filters.minPrice!);
+      }
+      if (filters.maxPrice !== undefined) {
+        results = results.filter(item => parseFloat(item.price) <= filters.maxPrice!);
+      }
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        results = results.filter(item => 
+          item.title.toLowerCase().includes(searchLower) ||
+          (item.description && item.description.toLowerCase().includes(searchLower))
+        );
+      }
+      if (filters.sellerId) {
+        results = results.filter(item => item.sellerId === filters.sellerId);
+      }
+    }
+
+    return results.map(item => ({
+      ...item,
+      category: this.categories.get(item.categoryId || '') || { id: '', name: 'Uncategorized', emoji: '📦', createdAt: new Date() },
+      seller: this.users.get(item.sellerId)!,
+    }));
+  }
+
+  async getItem(id: string): Promise<ItemWithDetails | undefined> {
+    const item = this.items.get(id);
+    if (!item) return undefined;
+
+    return {
+      ...item,
+      category: this.categories.get(item.categoryId || '') || { id: '', name: 'Uncategorized', emoji: '📦', createdAt: new Date() },
+      seller: this.users.get(item.sellerId)!,
+    };
+  }
+
+  async createItem(item: InsertItem): Promise<Item> {
+    const newItem: Item = {
+      ...item,
+      id: this.generateId(),
+      description: item.description || null,
+      categoryId: item.categoryId || null,
+      images: item.images || [],
+      isActive: true,
+      allowNegotiation: item.allowNegotiation || false,
+      pickupOnly: item.pickupOnly || false,
+      views: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.items.set(newItem.id, newItem);
+    return newItem;
+  }
+
+  async updateItem(id: string, updates: Partial<InsertItem>): Promise<Item | undefined> {
+    const item = this.items.get(id);
+    if (!item) return undefined;
+
+    const updatedItem = {
+      ...item,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.items.set(id, updatedItem);
+    return updatedItem;
+  }
+
+  async deleteItem(id: string, sellerId: string): Promise<boolean> {
+    const item = this.items.get(id);
+    if (!item || item.sellerId !== sellerId) return false;
+    
+    return this.items.delete(id);
+  }
+
+  async incrementItemViews(id: string): Promise<void> {
+    const item = this.items.get(id);
+    if (item) {
+      item.views = (item.views || 0) + 1;
+      this.items.set(id, item);
+    }
+  }
+
+  // Message operations (simplified for in-memory storage)
+  async getConversations(userId: string): Promise<Conversation[]> {
+    return Array.from(this.conversations.values())
+      .filter(conv => conv.participant1Id === userId || conv.participant2Id === userId)
+      .sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
+  }
+
+  async getConversationMessages(conversationId: string): Promise<MessageWithUsers[]> {
+    return Array.from(this.messages.values())
+      .filter(msg => {
+        const conv = this.conversations.get(conversationId);
+        return conv && (
+          (msg.fromUserId === conv.participant1Id && msg.toUserId === conv.participant2Id) ||
+          (msg.fromUserId === conv.participant2Id && msg.toUserId === conv.participant1Id)
+        );
+      })
+      .map(msg => ({
+        ...msg,
+        fromUser: this.users.get(msg.fromUserId)!,
+        toUser: this.users.get(msg.toUserId)!,
+        item: msg.itemId ? this.items.get(msg.itemId) : undefined,
+      }))
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const newMessage: Message = {
+      ...message,
+      id: this.generateId(),
+      itemId: message.itemId || null,
+      isRead: false,
+      createdAt: new Date(),
+    };
+    this.messages.set(newMessage.id, newMessage);
+
+    // Create or update conversation
+    const existingConv = Array.from(this.conversations.values()).find(conv =>
+      ((conv.participant1Id === message.fromUserId && conv.participant2Id === message.toUserId) ||
+       (conv.participant1Id === message.toUserId && conv.participant2Id === message.fromUserId)) &&
+      conv.itemId === (message.itemId || null)
+    );
+
+    if (existingConv) {
+      existingConv.lastMessageAt = new Date();
+      this.conversations.set(existingConv.id, existingConv);
+    } else {
+      const newConv: Conversation = {
+        id: this.generateId(),
+        participant1Id: message.fromUserId,
+        participant2Id: message.toUserId,
+        itemId: message.itemId || null,
+        lastMessageAt: new Date(),
+        createdAt: new Date(),
+      };
+      this.conversations.set(newConv.id, newConv);
+    }
+
+    return newMessage;
+  }
+
+  async markMessagesAsRead(conversationId: string, userId: string): Promise<void> {
+    const conv = this.conversations.get(conversationId);
+    if (!conv) return;
+
+    Array.from(this.messages.values())
+      .filter(msg => 
+        msg.toUserId === userId &&
+        !msg.isRead &&
+        ((msg.fromUserId === conv.participant1Id && msg.toUserId === conv.participant2Id) ||
+         (msg.fromUserId === conv.participant2Id && msg.toUserId === conv.participant1Id))
+      )
+      .forEach(msg => {
+        msg.isRead = true;
+        this.messages.set(msg.id, msg);
+      });
+  }
+
+  // Wishlist operations
+  async addToWishlist(userId: string, itemId: string): Promise<void> {
+    const key = `${userId}-${itemId}`;
+    this.wishlistEntries.set(key, { userId, itemId, createdAt: new Date() });
+  }
+
+  async removeFromWishlist(userId: string, itemId: string): Promise<void> {
+    const key = `${userId}-${itemId}`;
+    this.wishlistEntries.delete(key);
+  }
+
+  async getUserWishlist(userId: string): Promise<ItemWithDetails[]> {
+    const userWishlistEntries = Array.from(this.wishlistEntries.values())
+      .filter(entry => entry.userId === userId);
+
+    return userWishlistEntries
+      .map(entry => this.items.get(entry.itemId))
+      .filter(item => item && item.isActive)
+      .map(item => ({
+        ...item!,
+        category: this.categories.get(item!.categoryId || '') || { id: '', name: 'Uncategorized', emoji: '📦', createdAt: new Date() },
+        seller: this.users.get(item!.sellerId)!,
+      }));
+  }
+
+  async isItemInWishlist(userId: string, itemId: string): Promise<boolean> {
+    const key = `${userId}-${itemId}`;
+    return this.wishlistEntries.has(key);
+  }
+}
+
+// Use MemStorage for development when database connection is not available
+export const storage = new MemStorage();
