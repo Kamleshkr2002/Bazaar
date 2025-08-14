@@ -1,15 +1,8 @@
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import * as schema from "@shared/schema";
+// Legacy PostgreSQL database configuration - now replaced with MongoDB
+// This file is kept for compatibility but no longer used
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+import { connectDB } from './mongodb';
 
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  ssl: false // Disable SSL for local development
-});
-export const db = drizzle({ client: pool, schema });
+// Export MongoDB connection for backward compatibility
+export const db = null; // No longer used
+export const connectDatabase = connectDB;

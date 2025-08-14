@@ -27,11 +27,11 @@ Preferred communication style: Simple, everyday language.
 - **Development**: Hot module replacement in development with production-ready build process
 
 ### Database Layer
-- **Database**: PostgreSQL for relational data with ACID compliance
-- **ORM**: Drizzle ORM for type-safe database operations and schema management
-- **Connection**: Neon serverless PostgreSQL for scalable cloud hosting
+- **Database**: MongoDB for flexible document storage with ACID compliance
+- **ODM**: Mongoose for schema-based data modeling and validation
+- **Connection**: MongoDB Atlas cloud hosting for scalable deployment  
 - **Schema**: Strongly typed schemas with automatic TypeScript inference
-- **Session Storage**: Database-backed sessions for authentication persistence
+- **Session Storage**: In-memory sessions for development (can be switched to database-backed)
 
 ### Authentication & Authorization
 - **Provider**: Replit Auth with OpenID Connect integration
@@ -48,12 +48,12 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Infrastructure
 - **Hosting**: Replit platform with integrated development environment
-- **Database**: Neon PostgreSQL serverless database for data persistence
+- **Database**: MongoDB Atlas cloud database for document storage and persistence
 - **Authentication**: Replit Auth service for user authentication and authorization
 
 ### Key Libraries
 - **UI Framework**: React ecosystem with Radix UI for accessible components
-- **Database**: Drizzle ORM with PostgreSQL driver for database operations
+- **Database**: Mongoose ODM with MongoDB driver for database operations
 - **Real-time**: Socket.IO for bidirectional communication
 - **Validation**: Zod for runtime type validation and schema definitions
 - **HTTP Client**: TanStack Query for API state management
