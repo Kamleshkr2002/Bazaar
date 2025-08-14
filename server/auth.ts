@@ -97,8 +97,8 @@ export function setupAuth(app: Express) {
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.REDACTED || "REDACTED",
-        clientSecret: process.env.REDACTED || "REDACTED",
+        clientID: process.env.REDACTED,
+        clientSecret: process.env.REDACTED ,
         callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/auth/google/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
