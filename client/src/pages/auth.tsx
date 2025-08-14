@@ -37,20 +37,7 @@ export default function AuthPage() {
   const [pendingEmail, setPendingEmail] = useState<string>("");
   const { toast } = useToast();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!isLoading && user) {
-      setLocation("/dashboard");
-    }
-  }, [user, isLoading, setLocation]);
-
-  // Initialize forms when email changes
-  useEffect(() => {
-    if (pendingEmail) {
-      verifyForm.setValue('email', pendingEmail);
-    }
-  }, [pendingEmail, verifyForm]);
-
+  // Initialize all forms first
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -84,6 +71,20 @@ export default function AuthPage() {
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: { email: "", otp: "", newPassword: "" },
   });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!isLoading && user) {
+      setLocation("/dashboard");
+    }
+  }, [user, isLoading, setLocation]);
+
+  // Initialize forms when email changes
+  useEffect(() => {
+    if (pendingEmail) {
+      verifyForm.setValue('email', pendingEmail);
+    }
+  }, [pendingEmail, verifyForm]);
 
   // Custom register mutation with file upload
   const customRegisterMutation = useMutation({
@@ -123,7 +124,10 @@ export default function AuthPage() {
   });
 
   const verifyEmailMutation = useMutation({
-    mutationFn: (data: VerifyOTPData) => apiRequest('/api/verify-email', { method: 'POST', body: data }),
+    mutationFn: async (data: VerifyOTPData) => {
+      const response = await apiRequest('POST', '/api/verify-email', data);
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Email verified!",
@@ -141,7 +145,10 @@ export default function AuthPage() {
   });
 
   const forgotPasswordMutation = useMutation({
-    mutationFn: (data: ForgotPasswordData) => apiRequest('/api/forgot-password', { method: 'POST', body: data }),
+    mutationFn: async (data: ForgotPasswordData) => {
+      const response = await apiRequest('POST', '/api/forgot-password', data);
+      return response.json();
+    },
     onSuccess: () => {
       setPendingEmail(forgotForm.getValues().email);
       setStep('reset');
@@ -153,7 +160,10 @@ export default function AuthPage() {
   });
 
   const resetPasswordMutation = useMutation({
-    mutationFn: (data: ResetPasswordData) => apiRequest('/api/reset-password', { method: 'POST', body: data }),
+    mutationFn: async (data: ResetPasswordData) => {
+      const response = await apiRequest('POST', '/api/reset-password', data);
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Password reset successful",
@@ -171,7 +181,10 @@ export default function AuthPage() {
   });
 
   const resendVerificationMutation = useMutation({
-    mutationFn: (email: string) => apiRequest('/api/resend-verification', { method: 'POST', body: { email } }),
+    mutationFn: async (email: string) => {
+      const response = await apiRequest('POST', '/api/resend-verification', { email });
+      return response.json();
+    },
     onSuccess: () => {
       toast({
         title: "Code resent",
