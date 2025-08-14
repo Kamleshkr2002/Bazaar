@@ -58,6 +58,8 @@ export interface IStorage {
 }
 
 export class MongoStorage implements IStorage {
+  private initialized = false;
+  
   constructor() {
     this.initializeConnection();
   }
@@ -66,8 +68,15 @@ export class MongoStorage implements IStorage {
     try {
       await connectDB();
       await this.initializeCategories();
+      this.initialized = true;
     } catch (error) {
       console.error('Failed to connect to MongoDB:', error);
+    }
+  }
+
+  private async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initializeConnection();
     }
   }
 
@@ -142,6 +151,7 @@ export class MongoStorage implements IStorage {
   // Category operations
   async getCategories(): Promise<Category[]> {
     try {
+      await this.ensureInitialized();
       const categories = await CategoryModel.find().lean();
       return categories.map(cat => ({ ...cat, id: cat._id.toString() } as Category));
     } catch (error) {

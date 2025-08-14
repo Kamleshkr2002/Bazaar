@@ -3,15 +3,14 @@ import { createServer, type Server } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import { setupAuth, requireAuth } from "./auth";
-import { insertItemSchema, insertMessageSchema } from "@shared/schema";
+import { insertItemSchema, insertMessageSchema } from "@shared/mongodb-schemas";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupAuth(app);
 
-  // Initialize categories
-  await initializeCategories();
+  // Initialize categories - removed as it's now handled by storage initialization
 
   // Note: Auth routes (/api/login, /api/register, /api/logout, /api/auth/user) are now handled in auth.ts
 

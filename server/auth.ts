@@ -5,8 +5,8 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User, LoginData, RegisterData, loginSchema, registerSchema } from "../shared/schema";
-import connectPg from "connect-pg-simple";
+import { User, LoginData, RegisterData, loginSchema, registerSchema } from "../shared/mongodb-schemas";
+import MemoryStore from "memorystore";
 
 declare global {
   namespace Express {
@@ -30,14 +30,11 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
 }
 
 export function setupAuth(app: Express) {
-  // Session configuration
+  // Session configuration - using in-memory store for development
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-    ttl: sessionTtl,
-    tableName: "sessions",
+  const MemoryStoreConstructor = MemoryStore(session);
+  const sessionStore = new MemoryStoreConstructor({
+    checkPeriod: 86400000 // prune expired entries every 24h
   });
 
   const sessionSettings: session.SessionOptions = {
