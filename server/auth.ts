@@ -328,7 +328,7 @@ export function setupAuth(app: Express) {
 
       // Verify the user
       await storage.updateUser(user.id, {
-        isEmailVerified: true,s
+        isEmailVerified: true,
         verificationOTP: undefined,
         otpExpiry: undefined,
       });
