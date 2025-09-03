@@ -43,16 +43,17 @@ export default function Home() {
                   variant="secondary"
                   asChild
                 >
-                  <a href="/auth">Start Shopping</a>
+                  <a href="/browse">Start Shopping</a>
                 </Button>
+                
                 <Button
                   size="lg"
                   onClick={() => setShowCreateModal(true)}
                   variant="outline"
-                  className="border-white text-blue-600 hover:bg-gray-50 hover:border-gray-50 hover:text-primary"
+                  className="border-white text-blue-600 hover:bg-gray-50 hover:border-gray-50 hover:text-primary cursor-pointer"
                   asChild
                 >
-                  List Your Items
+                  <p>List Your Items</p>
                 </Button>
               </div>
             </div>

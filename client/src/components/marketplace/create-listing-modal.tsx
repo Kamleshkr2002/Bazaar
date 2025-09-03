@@ -36,7 +36,7 @@ export default function CreateListingModal({ open, onOpenChange }: CreateListing
   const queryClient = useQueryClient();
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Array<{id: string; name: string; emoji: string}>>({
     queryKey: ["/api/categories"],
   });
 
@@ -55,10 +55,9 @@ export default function CreateListingModal({ open, onOpenChange }: CreateListing
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateListingForm) => {
-      // Convert price to number
+      // Keep price as string to match MongoDB schema
       const listingData = {
         ...data,
-        price: parseFloat(data.price),
         images: [], // For now, we'll handle image upload separately
       };
       return apiRequest("POST", "/api/items", listingData);

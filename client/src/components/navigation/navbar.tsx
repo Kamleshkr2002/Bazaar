@@ -3,16 +3,33 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Bell, MessageCircle, Menu, User, Settings, LogOut } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Bell,
+  MessageCircle,
+  Menu,
+  User,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { Link, useLocation } from "wouter";
+import CreateListingModal from "../marketplace/create-listing-modal";
 
 export default function Navbar() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +40,16 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Home", active: location === "/" },
-    { href: "/browse", label: "Browse", active: location.startsWith("/browse") },
-    { href: "/dashboard", label: "Dashboard", active: location.startsWith("/dashboard") },
+    {
+      href: "/browse",
+      label: "Browse",
+      active: location.startsWith("/browse"),
+    },
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      active: location.startsWith("/dashboard"),
+    },
   ];
 
   return (
@@ -34,7 +59,9 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/">
-              <h1 className="text-2xl font-bold text-primary cursor-pointer">Campus Bazaar</h1>
+              <h1 className="text-2xl font-bold text-primary cursor-pointer">
+                Campus Bazaar
+              </h1>
             </Link>
           </div>
 
@@ -57,15 +84,19 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link key={link.href} href={link.href}>
-                <span className={`font-medium cursor-pointer ${
-                  link.active ? "text-primary" : "text-gray-700 hover:text-primary"
-                }`}>
+                <span
+                  className={`font-medium cursor-pointer ${
+                    link.active
+                      ? "text-primary"
+                      : "text-gray-700 hover:text-primary"
+                  }`}
+                >
                   {link.label}
                 </span>
               </Link>
             ))}
-            
-            <Button asChild>
+
+            <Button asChild onClick={() => setShowCreateModal(true)}>
               <Link href="/dashboard">
                 <Plus className="h-4 w-4 mr-2" />
                 List Item
@@ -74,23 +105,41 @@ export default function Navbar() {
 
             {/* User Menu */}
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="sm" className="relative" onClick={() => alert('Notifications feature coming soon!')}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative"
+                onClick={() => alert("Notifications feature coming soon!")}
+              >
                 <Bell className="h-4 w-4" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs">3</Badge>
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs">
+                  3
+                </Badge>
               </Button>
-              
-              <Button variant="ghost" size="sm" className="relative" onClick={() => alert('Chat feature coming soon!')}>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative"
+                onClick={() => alert("Chat feature coming soon!")}
+              >
                 <MessageCircle className="h-4 w-4" />
-                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-secondary">2</Badge>
+                <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs bg-secondary">
+                  2
+                </Badge>
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.profileImageUrl} />
+                      <AvatarImage src={user?.profileImageUrl || undefined} />
                       <AvatarFallback>
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        {user?.firstName?.[0]}
+                        {user?.lastName?.[0]}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -98,7 +147,9 @@ export default function Navbar() {
                 <DropdownMenuContent className="w-56" align="end">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user?.firstName} {user?.lastName}</p>
+                      <p className="font-medium">
+                        {user?.firstName} {user?.lastName}
+                      </p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {user?.email}
                       </p>
@@ -127,8 +178,8 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -159,11 +210,13 @@ export default function Navbar() {
             <div className="space-y-2">
               {navLinks.map((link) => (
                 <Link key={link.href} href={link.href}>
-                  <div className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
-                    link.active 
-                      ? "bg-primary text-white" 
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}>
+                  <div
+                    className={`block px-3 py-2 rounded-md text-base font-medium cursor-pointer ${
+                      link.active
+                        ? "bg-primary text-white"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
                     {link.label}
                   </div>
                 </Link>
@@ -179,6 +232,10 @@ export default function Navbar() {
             </div>
           </div>
         )}
+        <CreateListingModal
+          open={showCreateModal}
+          onOpenChange={setShowCreateModal}
+        />
       </div>
     </nav>
   );
