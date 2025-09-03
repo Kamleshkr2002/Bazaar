@@ -28,10 +28,16 @@ export const sessions = pgTable(
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").notNull().unique(),
-  password: varchar("password").notNull(),
+  password: varchar("password"),
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
   profileImageUrl: varchar("profile_image_url"),
+  googleId: varchar("google_id"),
+  isEmailVerified: boolean("is_email_verified").default(false),
+  verificationOTP: varchar("verification_otp"),
+  otpExpiry: timestamp("otp_expiry"),
+  resetPasswordOTP: varchar("reset_password_otp"),
+  resetPasswordExpiry: timestamp("reset_password_expiry"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

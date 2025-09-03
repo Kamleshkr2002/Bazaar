@@ -1,8 +1,21 @@
-// Legacy PostgreSQL database configuration - now replaced with MongoDB
-// This file is kept for compatibility but no longer used
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
+import * as schema from '../shared/schema';
 
-import { connectDB } from './mongodb';
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
+}
 
-// Export MongoDB connection for backward compatibility
-export const db = null; // No longer used
-export const connectDatabase = connectDB;
+const sql = neon(process.env.DATABASE_URL);
+export const db = drizzle(sql, { schema });
+
+export async function connectDatabase() {
+  try {
+    // Test database connection
+    await sql`SELECT 1`;
+    console.log('Connected to PostgreSQL database');
+  } catch (error) {
+    console.error('Failed to connect to database:', error);
+    throw error;
+  }
+}
