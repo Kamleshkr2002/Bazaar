@@ -33,7 +33,7 @@ const userSchema = new Schema<IUser>({
   resetPasswordExpiry: { type: Date },
 }, { 
   timestamps: true,
-  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; return ret; } }
+  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret?._id; delete ret?.__v; return ret; } }
 });
 
 // Category Schema
@@ -49,7 +49,7 @@ const categorySchema = new Schema<ICategory>({
   emoji: { type: String },
 }, { 
   timestamps: true,
-  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; return ret; } }
+  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret?._id; delete ret?.__v; return ret; } }
 });
 
 // Item Schema
@@ -84,7 +84,7 @@ const itemSchema = new Schema<IItem>({
   views: { type: Number, default: 0 },
 }, { 
   timestamps: true,
-  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; return ret; } }
+  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret?._id; delete ret?.__v; return ret; } }
 });
 
 // Message Schema
@@ -106,7 +106,7 @@ const messageSchema = new Schema<IMessage>({
   isRead: { type: Boolean, default: false },
 }, { 
   timestamps: true,
-  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; return ret; } }
+  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret?._id; delete ret?.__v; return ret; } }
 });
 
 // Conversation Schema
@@ -126,7 +126,7 @@ const conversationSchema = new Schema<IConversation>({
   lastMessageAt: { type: Date, default: Date.now },
 }, { 
   timestamps: true,
-  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; return ret; } }
+  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret?._id; delete ret?.__v; return ret; } }
 });
 
 // Wishlist Schema
@@ -142,7 +142,7 @@ const wishlistSchema = new Schema<IWishlist>({
   itemId: { type: Schema.Types.ObjectId, ref: 'Item', required: true },
 }, { 
   timestamps: true,
-  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret._id; delete ret.__v; return ret; } }
+  toJSON: { transform: (doc, ret) => { ret.id = ret._id.toString(); delete ret?._id; delete ret?.__v; return ret; } }
 });
 
 // Create compound index for wishlist

@@ -176,6 +176,7 @@ export class MongoStorage implements IStorage {
         { $set: userData },
         { upsert: true, new: true, lean: true }
       );
+      if (!user) throw new Error('Failed to upsert user');
       return { ...user, id: user._id.toString() } as User;
     } catch (error) {
       console.error('Error upserting user:', error);

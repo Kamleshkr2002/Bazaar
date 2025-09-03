@@ -10,6 +10,14 @@ const MONGODB_URI = process.env.MONGODB_URI
 
 
 
+// Global type declaration for caching MongoDB connection
+declare global {
+  var mongoose: {
+    conn: typeof import('mongoose') | null;
+    promise: Promise<typeof import('mongoose')> | null;
+  } | undefined;
+}
+
 // Connection state
 let cached = global.mongoose;
 
@@ -18,6 +26,10 @@ if (!cached) {
 }
 
 export async function connectDB() {
+  if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+  }
+  
   if (cached.conn) {
     return cached.conn;
   }
