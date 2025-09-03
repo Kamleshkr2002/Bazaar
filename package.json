@@ -48,6 +48,7 @@
     "@types/nodemailer": "^6.4.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/pg": "^8.15.5",
+    "@vercel/node": "^5.3.19",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^1.41.3",
     "clsx": "^2.1.1",
